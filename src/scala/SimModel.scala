@@ -46,7 +46,8 @@ class SimModel(spark:SparkSession) extends Serializable {
     //indexer
     val featureIndexer=new VectorIndexer().setInputCol("features").setOutputCol("indexedfeatures")
     //classifier model
-    val rt=new RandomForestClassifier().setLabelCol("label").setFeaturesCol("indexedfeatures").setMaxDepth(12).setImpurity("gini")
+    val rt=new RandomForestClassifier().setLabelCol("label").setFeaturesCol("indexedfeatures").
+      setPredictionCol("prediction").setMaxDepth(12).setImpurity("gini")
 
     //pipe
     val pipeline=new Pipeline().setStages(Array(featureIndexer,rt))
@@ -54,7 +55,7 @@ class SimModel(spark:SparkSession) extends Serializable {
       .addGrid(rt.maxDepth,Array(3,5,8,10,12))
       .addGrid(rt.impurity,Array("gini","entropy"))
       .build()
-    val evaluator=new BinaryClassificationEvaluator().setLabelCol("label")
+    val evaluator=new BinaryClassificationEvaluator().setLabelCol("label").setRawPredictionCol("prediction")
     val crv=new CrossValidator().setEstimator(pipeline).setEvaluator(evaluator).setEstimatorParamMaps(parametergrid).setNumFolds(3)
 
     val pipemodel=crv.fit(train)
