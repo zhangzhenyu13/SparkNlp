@@ -4,15 +4,13 @@ import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.ml.classification.{NaiveBayes, RandomForestClassifier}
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
-import org.apache.spark.ml.linalg.Vectors
-
 class SimModel(spark:SparkSession) extends Serializable {
   def EncodeFeatures(data: DataFrame):DataFrame={
     //doc model
     val word2Vec = new Word2Vec()
       .setInputCol("words")
       .setOutputCol("features")
-      .setVectorSize(30)
+      .setVectorSize(100)
       .setMinCount(0)
       .setMaxIter(5)
       .setStepSize(0.1)
@@ -52,16 +50,35 @@ class SimModel(spark:SparkSession) extends Serializable {
     //pipe
     val pipeline=new Pipeline().setStages(Array(featureIndexer,rt))
     val parametergrid=new ParamGridBuilder()
-      .addGrid(rt.maxDepth,Array(3,5,8,10,12))
+      .addGrid(rt.maxDepth,Array(3,5,8,10,12,15))
       .addGrid(rt.impurity,Array("gini","entropy"))
       .build()
-    val evaluator=new BinaryClassificationEvaluator().setLabelCol("label").setRawPredictionCol("prediction")
+    val evaluator=new BinaryClassificationEvaluator().setLabelCol("label")//.setMetricName("f1")
     val crv=new CrossValidator().setEstimator(pipeline).setEvaluator(evaluator).setEstimatorParamMaps(parametergrid).setNumFolds(3)
 
     val pipemodel=crv.fit(train)
     val result=pipemodel.transform(test)
-    val acc: Double =evaluator.evaluate(test)
+    result.show(3)
+    val roc: Double =evaluator.evaluate(result)
+    printf(s"roc=$roc \n")
+
+    var predict=result.select("prediction")
+    predict=predict.withColumn("predict",(predict.col("prediction")>0.5))
+    predict=predict.withColumn("label",result.col("label"))
+
+    var true_num=0
+    predict.rdd.map{x=>
+      if (x(1)==x(2)){
+        1
+      }
+      else{
+        0
+      }
+    }.foreach(x=>true_num=true_num+x)
+    val testnum=predict.count()
+    val acc=true_num/testnum
     printf(s"acc=$acc")
+
     return result
   }
 }
