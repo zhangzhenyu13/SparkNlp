@@ -62,7 +62,7 @@ class SimModel(spark:SparkSession) extends Serializable {
     val roc: Double =evaluator.evaluate(result)
     printf(s"roc=$roc \n")
 
-    result.write.json(MainRun.pathRoot+"atec_nlp/predictions.csv")
+    result.write.json(MainRun.pathRoot+"atec_nlp/predictions.json")
 
     return result
   }
