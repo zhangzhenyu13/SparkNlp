@@ -8,8 +8,7 @@ object Tester  {
     val num_t=data.select("words").count()
     print(s"data entry size=$num \n")
 
-    val word2vec=new SimModel(spark)
-    val result=word2vec.buildModel(data)
-    result.show(3)
+    val nlpDecision=new SimModel(spark)
+    nlpDecision.buildModel(data)
   }
 }
