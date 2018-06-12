@@ -62,22 +62,7 @@ class SimModel(spark:SparkSession) extends Serializable {
     val roc: Double =evaluator.evaluate(result)
     printf(s"roc=$roc \n")
 
-    var predict=result.select("prediction")
-    predict=predict.withColumn("predict",(predict.col("prediction")>0.5))
-    predict=predict.withColumn("label",result.col("label"))
-
-    var true_num=0
-    predict.rdd.map{x=>
-      if (x(1)==x(2)){
-        1
-      }
-      else{
-        0
-      }
-    }.foreach(x=>true_num=true_num+x)
-    val testnum=predict.count()
-    val acc=true_num/testnum
-    printf(s"acc=$acc")
+    result.write.json(MainRun.pathRoot+"atec_nlp/predictions.csv")
 
     return result
   }

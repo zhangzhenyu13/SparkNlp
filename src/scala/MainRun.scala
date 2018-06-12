@@ -5,8 +5,8 @@ import org.apache.spark.sql.types.StructType
 
 object MainRun{
   val spark=SparkSession.builder()
-    .master("local[*]")
-    .appName("data Loader").getOrCreate()
+    //.master("local[*]")
+    .appName("NlpDecision").getOrCreate()
   val pathRoot="hdfs://bd60:9000/"
 
 }
